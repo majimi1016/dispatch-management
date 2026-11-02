@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>配車登録</title>
+</head>
+<body>
+<h1>配車登録</h1>
+
+<form th:action="@{/dispatches}" th:object="${dispatch}" method="post">
+    <div>
+        <label>配車日</label>
+        <input type="date" th:field="*{dispatchDate}">
+        <span th:if="${#fields.hasErrors('dispatchDate')}" th:errors="*{dispatchDate}" style="color:red"></span>
+    </div>
+    <div>
+        <label>車両番号</label>
+        <input type="text" th:field="*{vehicleNo}">
+        <span th:if="${#fields.hasErrors('vehicleNo')}" th:errors="*{vehicleNo}" style="color:red"></span>
+    </div>
+    <div>
+        <label>ドライバー</label>
+        <input type="text" th:field="*{driverName}">
+        <span th:if="${#fields.hasErrors('driverName')}" th:errors="*{driverName}" style="color:red"></span>
+    </div>
+    <div>
+        <label>配送先</label>
+        <input type="text" th:field="*{destination}">
+        <span th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}" style="color:red"></span>
+    </div>
+    <div>
+        <label>数量</label>
+        <input type="number" th:field="*{quantity}">
+        <span th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}" style="color:red"></span>
+    </div>
+    <button type="submit">登録</button>
+</form>
+
+<a th:href="@{/dispatches}">一覧に戻る</a>
+</body>
+</html>
