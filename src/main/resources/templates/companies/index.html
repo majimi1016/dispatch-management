@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>会社の登録</title>
+</head>
+<body>
+
+<nav>
+    <a th:href="@{/dispatches}">配車一覧</a> |
+    <a th:href="@{/companies}">会社の登録</a>
+</nav>
+
+<h1>会社の登録</h1>
+
+<p th:if="${message}" th:text="${message}" style="color:green"></p>
+
+<form th:action="@{/companies}" th:object="${company}" method="post">
+    <div>
+        <label>会社名</label>
+        <input type="text" th:field="*{name}" placeholder="例:A運送">
+        <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:red"></span>
+    </div>
+    <div>
+        <label>区分</label>
+        <label th:each="t : ${companyTypes}">
+            <input type="radio" th:field="*{type}" th:value="${t}">
+            <span th:text="${t.label}"></span>
+        </label>
+        <span th:if="${#fields.hasErrors('type')}" th:errors="*{type}" style="color:red"></span>
+    </div>
+    <button type="submit">登録</button>
+</form>
+
+<h2>登録済みの会社</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>会社名</th>
+        <th>区分</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="c : ${companies}">
+        <td th:text="${c.name}"></td>
+        <td th:text="${c.type.label}"></td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(companies)}">
+        <td colspan="2">まだ登録されていません</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
