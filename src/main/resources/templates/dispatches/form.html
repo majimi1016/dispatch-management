@@ -33,6 +33,12 @@
         <input type="number" th:field="*{quantity}">
         <span th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}" style="color:red"></span>
     </div>
+    <!-- ↓ 追加:備考 -->
+    <div>
+        <label>備考</label>
+        <input type="text" th:field="*{remarks}">
+    </div>
+    <!-- ↑ 追加ここまで -->
     <button type="submit">登録</button>
 </form>
 

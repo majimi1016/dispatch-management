@@ -17,6 +17,7 @@
         <th>ドライバー</th>
         <th>配送先</th>
         <th>数量</th>
+        <th>備考</th> <!-- ← 追加 -->
     </tr>
     </thead>
     <tbody>
@@ -26,9 +27,10 @@
         <td th:text="${d.driverName}"></td>
         <td th:text="${d.destination}"></td>
         <td th:text="${d.quantity}"></td>
+        <td th:text="${d.remarks}"></td> <!-- ← 追加 -->
     </tr>
     <tr th:if="${#lists.isEmpty(dispatches)}">
-        <td colspan="5">配車データがありません</td>
+        <td colspan="6">配車データがありません</td> <!-- ← 5から6に変更(列が1つ増えたため) -->
     </tr>
     </tbody>
 </table>

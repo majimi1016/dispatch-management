@@ -35,6 +35,8 @@ public class Dispatch {
     @Min(value = 1, message = "数量は1以上で入力してください")
     private Integer quantity;
 
+    private String remarks; // ← 追加(備考。空欄OKなのでチェックなし)
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -52,4 +54,7 @@ public class Dispatch {
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public String getRemarks() { return remarks; }                        // ← 追加
+    public void setRemarks(String remarks) { this.remarks = remarks; }    // ← 追加
 }
