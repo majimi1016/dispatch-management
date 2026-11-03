@@ -1,9 +1,13 @@
 package com.example.dispatch;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +26,17 @@ public class Dispatch {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dispatchDate;
 
+    // ↓ 追加:会社(登録済みの会社から選ぶ)
+    @NotNull(message = "会社を選んでください")
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    // ↓ 追加:車格(小型・中型・大型)
+    @NotNull(message = "車格を選んでください")
+    @Enumerated(EnumType.STRING)
+    private VehicleSize vehicleSize;
+
     @NotBlank(message = "車両番号を入力してください")
     private String vehicleNo;
 
@@ -31,17 +46,26 @@ public class Dispatch {
     @NotBlank(message = "配送先を入力してください")
     private String destination;
 
-    @NotNull(message = "数量を入力してください")
-    @Min(value = 1, message = "数量は1以上で入力してください")
+    // ↓ 変更:数量 → 台数
+    @NotNull(message = "台数を入力してください")
+    @Min(value = 1, message = "台数は1以上で入力してください")
     private Integer quantity;
 
-    private String remarks; // ← 追加(備考。空欄OKなのでチェックなし)
+    private String remarks;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public LocalDate getDispatchDate() { return dispatchDate; }
     public void setDispatchDate(LocalDate dispatchDate) { this.dispatchDate = dispatchDate; }
+
+    // ↓ 追加
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
+
+    // ↓ 追加
+    public VehicleSize getVehicleSize() { return vehicleSize; }
+    public void setVehicleSize(VehicleSize vehicleSize) { this.vehicleSize = vehicleSize; }
 
     public String getVehicleNo() { return vehicleNo; }
     public void setVehicleNo(String vehicleNo) { this.vehicleNo = vehicleNo; }
@@ -55,6 +79,6 @@ public class Dispatch {
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-    public String getRemarks() { return remarks; }                        // ← 追加
-    public void setRemarks(String remarks) { this.remarks = remarks; }    // ← 追加
+    public String getRemarks() { return remarks; }
+    public void setRemarks(String remarks) { this.remarks = remarks; }
 }

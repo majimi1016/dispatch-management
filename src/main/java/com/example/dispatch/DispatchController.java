@@ -9,14 +9,31 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/dispatches")
 public class DispatchController {
 
     private final DispatchRepository repository;
+    private final CompanyRepository companyRepository;   // ← 追加
 
-    public DispatchController(DispatchRepository repository) {
+    public DispatchController(DispatchRepository repository,
+                              CompanyRepository companyRepository) {   // ← 変更
         this.repository = repository;
+        this.companyRepository = companyRepository;      // ← 追加
+    }
+
+    // 会社のプルダウンの選択肢(登録済みの会社)  ← 追加
+    @ModelAttribute("companies")
+    public List<Company> companies() {
+        return companyRepository.findAllByOrderByNameAsc();
+    }
+
+    // 車格のプルダウンの選択肢  ← 追加
+    @ModelAttribute("vehicleSizes")
+    public VehicleSize[] vehicleSizes() {
+        return VehicleSize.values();
     }
 
     // 一覧画面
