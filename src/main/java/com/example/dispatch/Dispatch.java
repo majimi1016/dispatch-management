@@ -26,13 +26,16 @@ public class Dispatch {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dispatchDate;
 
-    // ↓ 追加:会社(登録済みの会社から選ぶ)
+    // ← 追加:昼/夜
+    @NotNull(message = "昼か夜かを選んでください")
+    @Enumerated(EnumType.STRING)
+    private Shift shift;
+
     @NotNull(message = "会社を選んでください")
     @ManyToOne
     @JoinColumn(name = "company_id")
     private Company company;
 
-    // ↓ 追加:車格(小型・中型・大型)
     @NotNull(message = "車格を選んでください")
     @Enumerated(EnumType.STRING)
     private VehicleSize vehicleSize;
@@ -46,7 +49,6 @@ public class Dispatch {
     @NotBlank(message = "配送先を入力してください")
     private String destination;
 
-    // ↓ 変更:数量 → 台数
     @NotNull(message = "台数を入力してください")
     @Min(value = 1, message = "台数は1以上で入力してください")
     private Integer quantity;
@@ -59,11 +61,13 @@ public class Dispatch {
     public LocalDate getDispatchDate() { return dispatchDate; }
     public void setDispatchDate(LocalDate dispatchDate) { this.dispatchDate = dispatchDate; }
 
-    // ↓ 追加
+    // ← 追加
+    public Shift getShift() { return shift; }
+    public void setShift(Shift shift) { this.shift = shift; }
+
     public Company getCompany() { return company; }
     public void setCompany(Company company) { this.company = company; }
 
-    // ↓ 追加
     public VehicleSize getVehicleSize() { return vehicleSize; }
     public void setVehicleSize(VehicleSize vehicleSize) { this.vehicleSize = vehicleSize; }
 

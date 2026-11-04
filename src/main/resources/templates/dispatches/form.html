@@ -5,6 +5,13 @@
     <title>配車登録</title>
 </head>
 <body>
+
+<nav>
+    <a th:href="@{/dispatches}">配車一覧</a> |
+    <a th:href="@{/dispatches/new}">配車登録</a> |
+    <a th:href="@{/companies}">会社の登録</a>
+</nav>
+
 <h1>配車登録</h1>
 
 <form th:action="@{/dispatches}" th:object="${dispatch}" method="post">
@@ -14,7 +21,16 @@
         <span th:if="${#fields.hasErrors('dispatchDate')}" th:errors="*{dispatchDate}" style="color:red"></span>
     </div>
 
-    <!-- ↓ 追加:会社 -->
+    <!-- ← 追加:昼/夜 -->
+    <div>
+        <label>昼/夜</label>
+        <label th:each="sh : ${shifts}">
+            <input type="radio" th:field="*{shift}" th:value="${sh}">
+            <span th:text="${sh.label}"></span>
+        </label>
+        <span th:if="${#fields.hasErrors('shift')}" th:errors="*{shift}" style="color:red"></span>
+    </div>
+
     <div>
         <label>会社</label>
         <select th:field="*{company}">
@@ -25,7 +41,6 @@
         <span th:if="${#fields.hasErrors('company')}" th:errors="*{company}" style="color:red"></span>
     </div>
 
-    <!-- ↓ 追加:車格 -->
     <div>
         <label>車格</label>
         <select th:field="*{vehicleSize}">

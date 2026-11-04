@@ -20,6 +20,7 @@
     <thead>
     <tr>
         <th>配車日</th>
+        <th>昼/夜</th>  <!-- ← 追加 -->
         <th>会社</th>
         <th>車格</th>
         <th>車両番号</th>
@@ -32,6 +33,7 @@
     <tbody>
     <tr th:each="d : ${dispatches}">
         <td th:text="${d.dispatchDate}"></td>
+        <td th:text="${d.shift?.label}"></td>  <!-- ← 追加 -->
         <td th:text="${d.company?.name}"></td>
         <td th:text="${d.vehicleSize?.label}"></td>
         <td th:text="${d.vehicleNo}"></td>
@@ -41,7 +43,7 @@
         <td th:text="${d.remarks}"></td>
     </tr>
     <tr th:if="${#lists.isEmpty(dispatches)}">
-        <td colspan="8">配車データがありません</td>
+        <td colspan="9">配車データがありません</td>  <!-- ← 8から9に変更 -->
     </tr>
     </tbody>
 </table>

@@ -16,24 +16,30 @@ import java.util.List;
 public class DispatchController {
 
     private final DispatchRepository repository;
-    private final CompanyRepository companyRepository;   // ← 追加
+    private final CompanyRepository companyRepository;
 
     public DispatchController(DispatchRepository repository,
-                              CompanyRepository companyRepository) {   // ← 変更
+                              CompanyRepository companyRepository) {
         this.repository = repository;
-        this.companyRepository = companyRepository;      // ← 追加
+        this.companyRepository = companyRepository;
     }
 
-    // 会社のプルダウンの選択肢(登録済みの会社)  ← 追加
+    // 会社のプルダウンの選択肢
     @ModelAttribute("companies")
     public List<Company> companies() {
         return companyRepository.findAllByOrderByNameAsc();
     }
 
-    // 車格のプルダウンの選択肢  ← 追加
+    // 車格のプルダウンの選択肢
     @ModelAttribute("vehicleSizes")
     public VehicleSize[] vehicleSizes() {
         return VehicleSize.values();
+    }
+
+    // ← 追加:昼/夜のラジオボタンの選択肢
+    @ModelAttribute("shifts")
+    public Shift[] shifts() {
+        return Shift.values();
     }
 
     // 一覧画面
@@ -46,7 +52,9 @@ public class DispatchController {
     // 登録画面
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("dispatch", new Dispatch());
+        Dispatch dispatch = new Dispatch();
+        dispatch.setShift(Shift.DAY);   // ← 追加:最初は「昼」を選んだ状態にする
+        model.addAttribute("dispatch", dispatch);
         return "dispatches/form";
     }
 
