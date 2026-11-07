@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>配達入力</title>
+    <style>
+        .error { color: red; }
+        #lines td { padding: 4px 8px; vertical-align: top; }
+    </style>
 </head>
 <body>
 
@@ -10,11 +14,12 @@
 
 <h1>配達入力</h1>
 
-<form th:action="@{/dispatches}" th:object="${dispatch}" method="post">
+<form th:action="@{/dispatches}" th:object="${dispatchForm}" method="post">
+
     <div>
         <label>配車日</label>
         <input type="date" th:field="*{dispatchDate}">
-        <span th:if="${#fields.hasErrors('dispatchDate')}" th:errors="*{dispatchDate}" style="color:red"></span>
+        <span class="error" th:if="${#fields.hasErrors('dispatchDate')}" th:errors="*{dispatchDate}"></span>
     </div>
 
     <div>
@@ -23,7 +28,7 @@
             <input type="radio" th:field="*{shift}" th:value="${sh}">
             <span th:text="${sh.label}"></span>
         </label>
-        <span th:if="${#fields.hasErrors('shift')}" th:errors="*{shift}" style="color:red"></span>
+        <span class="error" th:if="${#fields.hasErrors('shift')}" th:errors="*{shift}"></span>
     </div>
 
     <div>
@@ -33,45 +38,109 @@
             <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"></option>
         </select>
         <a th:href="@{/companies}">会社がない場合はこちらから登録</a>
-        <span th:if="${#fields.hasErrors('company')}" th:errors="*{company}" style="color:red"></span>
+        <span class="error" th:if="${#fields.hasErrors('company')}" th:errors="*{company}"></span>
     </div>
 
     <div>
-        <label>車格</label>
-        <select th:field="*{vehicleSize}">
+        <label>品目</label>
+        <select th:field="*{item}">
             <option value="">選んでください</option>
-            <option th:each="s : ${vehicleSizes}" th:value="${s}" th:text="${s.label}"></option>
+            <option th:each="i : ${items}" th:value="${i.id}" th:text="${i.name}"></option>
         </select>
-        <span th:if="${#fields.hasErrors('vehicleSize')}" th:errors="*{vehicleSize}" style="color:red"></span>
+        <a th:href="@{/items}">品目がない場合はこちらから登録</a>
+        <span class="error" th:if="${#fields.hasErrors('item')}" th:errors="*{item}"></span>
     </div>
 
-    <div>
-        <label>車両番号</label>
-        <input type="text" th:field="*{vehicleNo}">
-        <span th:if="${#fields.hasErrors('vehicleNo')}" th:errors="*{vehicleNo}" style="color:red"></span>
-    </div>
-    <div>
-        <label>ドライバー</label>
-        <input type="text" th:field="*{driverName}">
-        <span th:if="${#fields.hasErrors('driverName')}" th:errors="*{driverName}" style="color:red"></span>
-    </div>
     <div>
         <label>配送先</label>
-        <input type="text" th:field="*{destination}">
-        <span th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}" style="color:red"></span>
+        <input type="text" th:field="*{destination}" placeholder="例:◯◯現場">
+        <span class="error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}"></span>
     </div>
-    <div>
-        <label>台数</label>
-        <input type="number" th:field="*{quantity}" min="1">
-        <span th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}" style="color:red"></span>
-    </div>
-    <div>
+
+    <!-- 車格と台数(何行でも) -->
+    <h3>車格と台数</h3>
+    <table id="lines">
+        <thead>
+        <tr>
+            <th>車格</th>
+            <th>台数</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="line-row" th:each="line, stat : *{lines}">
+            <td>
+                <select th:field="*{lines[__${stat.index}__].vehicleSize}">
+                    <option value="">選んでください</option>
+                    <option th:each="s : ${vehicleSizes}" th:value="${s}" th:text="${s.label}"></option>
+                </select>
+                <div class="error"
+                     th:if="${#fields.hasErrors('lines[__${stat.index}__].vehicleSize')}"
+                     th:errors="*{lines[__${stat.index}__].vehicleSize}"></div>
+            </td>
+            <td>
+                <input type="number" min="1" style="width:70px"
+                       th:field="*{lines[__${stat.index}__].quantity}"> 台
+                <div class="error"
+                     th:if="${#fields.hasErrors('lines[__${stat.index}__].quantity')}"
+                     th:errors="*{lines[__${stat.index}__].quantity}"></div>
+            </td>
+            <td>
+                <button type="button" onclick="removeLine(this)">削除</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <button type="button" onclick="addLine()">+ 車格を追加</button>
+    <div class="error" th:if="${#fields.hasErrors('lines')}" th:errors="*{lines}"></div>
+
+    <div style="margin-top:12px">
         <label>備考</label>
         <input type="text" th:field="*{remarks}">
     </div>
-    <button type="submit">登録</button>
+
+    <button type="submit" style="margin-top:12px">登録</button>
 </form>
 
 <a th:href="@{/dispatches}">一覧に戻る</a>
+
+<script>
+    // 行の番号(lines[0], lines[1]...)を、上から順に振り直す
+    function renumber() {
+        const rows = document.querySelectorAll('#lines tbody .line-row');
+        rows.forEach((row, i) => {
+            row.querySelectorAll('select, input').forEach(el => {
+                el.name = el.name.replace(/lines\[\d+\]/, 'lines[' + i + ']');
+                el.id = el.id.replace(/lines\d+/, 'lines' + i);
+            });
+        });
+    }
+
+    // 「+ 車格を追加」:1行目をコピーして、中身を空にして下に足す
+    function addLine() {
+        const tbody = document.querySelector('#lines tbody');
+        const first = tbody.querySelector('.line-row');
+        const copy = first.cloneNode(true);
+        copy.querySelectorAll('select').forEach(el => el.value = '');
+        copy.querySelectorAll('input').forEach(el => el.value = '');
+        copy.querySelectorAll('.error').forEach(el => el.remove());
+        tbody.appendChild(copy);
+        renumber();
+    }
+
+    // 「削除」:その行を消す(最後の1行は、消さずに中身を空にする)
+    function removeLine(button) {
+        const tbody = document.querySelector('#lines tbody');
+        const row = button.closest('.line-row');
+        if (tbody.querySelectorAll('.line-row').length === 1) {
+            row.querySelectorAll('select').forEach(el => el.value = '');
+            row.querySelectorAll('input').forEach(el => el.value = '');
+            return;
+        }
+        row.remove();
+        renumber();
+    }
+</script>
+
 </body>
 </html>

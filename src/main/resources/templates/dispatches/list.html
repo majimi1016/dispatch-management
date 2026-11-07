@@ -10,6 +10,8 @@
 
 <h1>配達一覧</h1>
 
+<p th:if="${message}" th:text="${message}" style="color:green"></p>
+
 <a th:href="@{/dispatches/new}">新しく入力する</a>
 
 <table border="1">
@@ -18,10 +20,9 @@
         <th>配車日</th>
         <th>昼/夜</th>
         <th>会社</th>
-        <th>車格</th>
-        <th>車両番号</th>
-        <th>ドライバー</th>
+        <th>品目</th>
         <th>配送先</th>
+        <th>車格</th>
         <th>台数</th>
         <th>備考</th>
     </tr>
@@ -31,15 +32,14 @@
         <td th:text="${d.dispatchDate}"></td>
         <td th:text="${d.shift?.label}"></td>
         <td th:text="${d.company?.name}"></td>
-        <td th:text="${d.vehicleSize?.label}"></td>
-        <td th:text="${d.vehicleNo}"></td>
-        <td th:text="${d.driverName}"></td>
+        <td th:text="${d.item?.name}"></td>
         <td th:text="${d.destination}"></td>
+        <td th:text="${d.vehicleSize?.label}"></td>
         <td th:text="${d.quantity}"></td>
         <td th:text="${d.remarks}"></td>
     </tr>
     <tr th:if="${#lists.isEmpty(dispatches)}">
-        <td colspan="9">配達データがありません</td>
+        <td colspan="8">配達データがありません</td>
     </tr>
     </tbody>
 </table>

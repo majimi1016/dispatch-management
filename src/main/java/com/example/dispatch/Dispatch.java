@@ -8,10 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -22,35 +18,24 @@ public class Dispatch {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "配車日を入力してください")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dispatchDate;
 
-    // ← 追加:昼/夜
-    @NotNull(message = "昼か夜かを選んでください")
     @Enumerated(EnumType.STRING)
     private Shift shift;
 
-    @NotNull(message = "会社を選んでください")
     @ManyToOne
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @NotNull(message = "車格を選んでください")
+    @ManyToOne
+    @JoinColumn(name = "item_id")
+    private Item item;
+
+    private String destination;
+
     @Enumerated(EnumType.STRING)
     private VehicleSize vehicleSize;
 
-    @NotBlank(message = "車両番号を入力してください")
-    private String vehicleNo;
-
-    @NotBlank(message = "ドライバー名を入力してください")
-    private String driverName;
-
-    @NotBlank(message = "配送先を入力してください")
-    private String destination;
-
-    @NotNull(message = "台数を入力してください")
-    @Min(value = 1, message = "台数は1以上で入力してください")
     private Integer quantity;
 
     private String remarks;
@@ -61,24 +46,20 @@ public class Dispatch {
     public LocalDate getDispatchDate() { return dispatchDate; }
     public void setDispatchDate(LocalDate dispatchDate) { this.dispatchDate = dispatchDate; }
 
-    // ← 追加
     public Shift getShift() { return shift; }
     public void setShift(Shift shift) { this.shift = shift; }
 
     public Company getCompany() { return company; }
     public void setCompany(Company company) { this.company = company; }
 
-    public VehicleSize getVehicleSize() { return vehicleSize; }
-    public void setVehicleSize(VehicleSize vehicleSize) { this.vehicleSize = vehicleSize; }
-
-    public String getVehicleNo() { return vehicleNo; }
-    public void setVehicleNo(String vehicleNo) { this.vehicleNo = vehicleNo; }
-
-    public String getDriverName() { return driverName; }
-    public void setDriverName(String driverName) { this.driverName = driverName; }
+    public Item getItem() { return item; }
+    public void setItem(Item item) { this.item = item; }
 
     public String getDestination() { return destination; }
     public void setDestination(String destination) { this.destination = destination; }
+
+    public VehicleSize getVehicleSize() { return vehicleSize; }
+    public void setVehicleSize(VehicleSize vehicleSize) { this.vehicleSize = vehicleSize; }
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
