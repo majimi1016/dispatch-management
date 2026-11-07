@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>品目の登録</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/menu :: menu}"></nav>
+
+<h1>品目の登録</h1>
+
+<p th:if="${message}" th:text="${message}" style="color:green"></p>
+
+<form th:action="@{/items}" th:object="${item}" method="post">
+    <div>
+        <label>品目名</label>
+        <input type="text" th:field="*{name}" placeholder="例:密粒度アスコン13">
+        <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:red"></span>
+    </div>
+    <button type="submit">登録</button>
+</form>
+
+<h2>登録済みの品目</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>品目名</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="i : ${items}">
+        <td th:text="${i.name}"></td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(items)}">
+        <td>まだ登録されていません</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

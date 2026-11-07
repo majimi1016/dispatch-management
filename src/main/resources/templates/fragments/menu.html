@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<nav th:fragment="menu" class="menu">
+    <style>
+        .menu {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            padding: 10px 16px;
+            background: #f3f4f6;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+        .menu a { text-decoration: none; color: #1f2937; }
+        .menu a:hover { text-decoration: underline; }
+        .dropdown { position: relative; }
+        .dropdown summary { cursor: pointer; list-style: none; }
+        .dropdown summary::-webkit-details-marker { display: none; }
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 6px;
+            background: #fff;
+            border: 1px solid #ddd;
+            min-width: 140px;
+            z-index: 10;
+        }
+        .dropdown-list a { display: block; padding: 8px 12px; }
+        .dropdown-list a:hover { background: #f3f4f6; text-decoration: none; }
+    </style>
+
+    <a th:href="@{/dispatches}">配達一覧</a>
+    <a th:href="@{/dispatches/new}">配達入力</a>
+
+    <details class="dropdown">
+        <summary>登録 ▼</summary>
+        <div class="dropdown-list">
+            <a th:href="@{/companies}">会社の登録</a>
+            <a th:href="@{/items}">品目の登録</a>
+        </div>
+    </details>
+</nav>
+
+</body>
+</html>

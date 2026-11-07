@@ -2,17 +2,13 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>配車登録</title>
+    <title>配達入力</title>
 </head>
 <body>
 
-<nav>
-    <a th:href="@{/dispatches}">配車一覧</a> |
-    <a th:href="@{/dispatches/new}">配車登録</a> |
-    <a th:href="@{/companies}">会社の登録</a>
-</nav>
+<nav th:replace="~{fragments/menu :: menu}"></nav>
 
-<h1>配車登録</h1>
+<h1>配達入力</h1>
 
 <form th:action="@{/dispatches}" th:object="${dispatch}" method="post">
     <div>
@@ -21,7 +17,6 @@
         <span th:if="${#fields.hasErrors('dispatchDate')}" th:errors="*{dispatchDate}" style="color:red"></span>
     </div>
 
-    <!-- ← 追加:昼/夜 -->
     <div>
         <label>昼/夜</label>
         <label th:each="sh : ${shifts}">
