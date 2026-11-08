@@ -1,10 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>予約一覧</title>
+    <style>
+        table { border-collapse: collapse; margin-top: 8px; }
+        th, td { border: 1px solid #ccc; padding: 6px 10px; }
+        .status-RESERVED  { background: #fff8db; }
+        .status-PICKED_UP { background: #e6f4ea; }
+        .status-CANCELLED { background: #eeeeee; color: #888; }
+        .date-nav { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+    </style>
 </head>
 <body>
-$END$
+
+<nav th:replace="~{fragments/menu :: menu}"></nav>
+
+<h1>合材予約一覧</h1>
+
+<p th:if="${message}" th:text="${message}" style="color:green"></p>
+
+<!-- 日付の切り替え -->
+<form th:action="@{/reservations}" method="get" class="date-nav">
+    <a th:href="@{/reservations(date=${date.minusDays(1)})}">◀ 前の日</a>
+    <input type="date" name="date" th:value="${date}">
+    <button type="submit">表示</button>
+    <a th:href="@{/reservations(date=${date.plusDays(1)})}">次の日 ▶</a>
+    <a th:href="@{/reservations}">今日</a>
+</form>
+
+<a th:href="@{/reservations/new}">新しく予約する</a>
+
+<!-- 品目ごとの合計 -->
+<h2 th:text="${#temporals.format(date, 'M/d') + ' の品目ごとの合計(キャンセルを除く)'}"></h2>
+<table>
+    <thead>
+    <tr>
+        <th>品目</th>
+        <th>合計</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="t : ${totals}">
+        <td th:text="${t.itemName}"></td>
+        <td th:text="${#numbers.formatDecimal(t.total, 1, 1) + ' t'}"></td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(totals)}">
+        <td colspan="2">予約はありません</td>
+    </tr>
+    </tbody>
+</table>
+
+<!-- 予約の一覧 -->
+<h2 th:text="${#temporals.format(date, 'M/d') + ' の予約'}"></h2>
+<table>
+    <thead>
+    <tr>
+        <th>昼/夜</th>
+        <th>引取先</th>
+        <th>品目と数量</th>
+        <th>備考</th>
+        <th>状態</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="r : ${reservations}" th:classappend="${'status-' + r.status.name()}">
+        <td th:text="${r.shift.label}"></td>
+        <td th:text="${r.customerName}"></td>
+        <td>
+            <div th:each="ri : ${r.items}"
+                 th:text="${ri.item.name + ' ' + #numbers.formatDecimal(ri.quantity, 1, 1) + 't'}"></div>
+        </td>
+        <td th:text="${r.remarks}"></td>
+        <td th:text="${r.status.label}"></td>
+        <td>
+            <th:block th:if="${r.status.name() == 'RESERVED'}">
+                <form th:action="@{/reservations/{id}/pickup(id=${r.id})}" method="post" style="display:inline">
+                    <button type="submit">引取済みにする</button>
+                </form>
+                <form th:action="@{/reservations/{id}/cancel(id=${r.id})}" method="post" style="display:inline"
+                      onsubmit="return confirm('この予約をキャンセルしますか?')">
+                    <button type="submit">キャンセル</button>
+                </form>
+            </th:block>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(reservations)}">
+        <td colspan="6">この日の予約はありません</td>
+    </tr>
+    </tbody>
+</table>
+
 </body>
 </html>
