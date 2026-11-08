@@ -13,9 +13,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -86,12 +90,52 @@ public class DispatchController {
         return "dispatches/list";
     }
 
+    // ↓ 追加:配達の月別まとめ
+    @GetMapping("/monthly")
+    public String monthly(@RequestParam(name = "ym", required = false) String ym,
+                          @RequestParam(name = "shift", required = false) Shift shift,
+                          Model model) {
+        YearMonth target = parseYearMonth(ym);
+
+        List<DispatchRepository.DailyCount> rows =
+                repository.sumDaily(target.atDay(1), target.atEndOfMonth(), shift);
+
+        // この月に配達がある会社だけを集める
+        Set<Long> companyIds = new HashSet<>();
+        for (DispatchRepository.DailyCount r : rows) {
+            if (r.getCompanyId() != null) {
+                companyIds.add(r.getCompanyId());
+            }
+        }
+        // 社内 → 社外、名前の順に並べる
+        List<Company> companies = new ArrayList<>(companyRepository.findAllById(companyIds));
+        companies.sort(Comparator.comparing(Company::getType)
+                .thenComparing(Company::getName));
+
+        model.addAttribute("ym", target);
+        model.addAttribute("shift", shift);
+        model.addAttribute("summary", new MonthlySummary(target, companies, rows));
+        return "dispatches/monthly";
+    }
+
+    // 「2026-11」の形の文字を年月にする(空や変な形なら今月)
+    private YearMonth parseYearMonth(String ym) {
+        if (ym == null || ym.isBlank()) {
+            return YearMonth.now();
+        }
+        try {
+            return YearMonth.parse(ym);
+        } catch (DateTimeParseException e) {
+            return YearMonth.now();
+        }
+    }
+
     // 配達入力画面
     @GetMapping("/new")
     public String newForm(Model model) {
         DispatchForm form = new DispatchForm();
-        form.setShift(Shift.DAY);                // 最初は「昼」
-        form.getLines().add(new DispatchLine()); // 車格の行を1行用意しておく
+        form.setShift(Shift.DAY);
+        form.getLines().add(new DispatchLine());
         model.addAttribute("dispatchForm", form);
         return "dispatches/form";
     }
@@ -102,13 +146,13 @@ public class DispatchController {
                          BindingResult result,
                          RedirectAttributes redirectAttributes) {
 
-        // ↓ 追加:同じ車格が2行以上ないかチェック
+        // 同じ車格が2行以上ないかチェック
         Set<VehicleSize> seen = EnumSet.noneOf(VehicleSize.class);
         List<DispatchLine> lines = dispatchForm.getLines();
         for (int i = 0; i < lines.size(); i++) {
             DispatchLine line = lines.get(i);
             if (line == null || line.getVehicleSize() == null) {
-                continue;  // 車格が未選択の行は、別のチェックでエラーになるので飛ばす
+                continue;
             }
             if (!seen.add(line.getVehicleSize())) {
                 result.rejectValue("lines[" + i + "].vehicleSize", "duplicate",

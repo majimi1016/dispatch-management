@@ -31,12 +31,18 @@
         .dropdown-list a { display: block; padding: 8px 12px; }
         .dropdown-list a:hover { background: #f3f4f6; text-decoration: none; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .sat { color: #1d4ed8; }   /* ← 追加:土曜日は青 */
-        .sun { color: #dc2626; }   /* ← 追加:日曜日は赤 */
+        .sat { color: #1d4ed8; }
+        .sun { color: #dc2626; }
     </style>
 
-    <a th:href="@{/dispatches}">配達一覧</a>
-    <a th:href="@{/dispatches/new}">配達入力</a>
+    <details class="dropdown">
+        <summary>配達 ▼</summary>
+        <div class="dropdown-list">
+            <a th:href="@{/dispatches}">配達一覧</a>
+            <a th:href="@{/dispatches/new}">配達入力</a>
+            <a th:href="@{/dispatches/monthly}">月別まとめ</a>
+        </div>
+    </details>
 
     <details class="dropdown">
         <summary>合材予約 ▼</summary>
@@ -58,21 +64,13 @@
         // 登録ボタンの二重押しを防ぐ(全画面共通)
         document.addEventListener('submit', function (e) {
             const form = e.target;
-
-            // 確認ダイアログで「キャンセル」を押したときなど、送信が止められたら何もしない
             if (e.defaultPrevented) return;
-
-            // 日付の切り替え(GET)は対象外。登録(POST)だけ
             if (form.method.toLowerCase() !== 'post') return;
-
-            // すでに送信中なら、2回目の送信を止める
             if (form.dataset.submitting === 'true') {
                 e.preventDefault();
                 return;
             }
             form.dataset.submitting = 'true';
-
-            // 送信ボタンを押せなくして、文字を「登録中...」に変える
             form.querySelectorAll('button[type="submit"], button:not([type])').forEach(function (btn) {
                 btn.dataset.originalText = btn.textContent;
                 btn.textContent = '登録中...';

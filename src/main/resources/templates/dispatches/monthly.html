@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>配達の月別まとめ</title>
+    <style>
+        .nav-row { display: flex; gap: 12px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+        .shift-tabs a {
+            padding: 4px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #1f2937;
+        }
+        .shift-tabs a.active { background: #1f2937; color: #fff; }
+        table.summary { border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+        table.summary th, table.summary td {
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        table.summary th { background: #f3f4f6; text-align: center; }
+        table.summary td.date { text-align: left; }
+        table.summary td.total { background: #f9fafb; font-weight: bold; }
+        table.summary tfoot td { background: #eef2ff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/menu :: menu}"></nav>
+
+<h1>配達の月別まとめ</h1>
+
+<!-- 月の切り替え -->
+<div class="nav-row">
+    <a th:href="@{/dispatches/monthly(ym=${ym.minusMonths(1)}, shift=${shift})}">◀ 前の月</a>
+    <form th:action="@{/dispatches/monthly}" method="get">
+        <input type="month" name="ym" th:value="${ym}">
+        <input type="hidden" name="shift" th:value="${shift}">
+        <button type="submit">表示</button>
+    </form>
+    <a th:href="@{/dispatches/monthly(ym=${ym.plusMonths(1)}, shift=${shift})}">次の月 ▶</a>
+    <a th:href="@{/dispatches/monthly(shift=${shift})}">今月</a>
+</div>
+
+<!-- 昼/夜の切り替え -->
+<div class="nav-row shift-tabs">
+    <a th:href="@{/dispatches/monthly(ym=${ym})}"
+       th:classappend="${shift == null} ? 'active'">昼夜合計</a>
+    <a th:each="sh : ${shifts}"
+       th:href="@{/dispatches/monthly(ym=${ym}, shift=${sh})}"
+       th:text="${sh.label}"
+       th:classappend="${shift == sh} ? 'active'"></a>
+</div>
+
+<h2 th:text="|${ym.year}年${ym.monthValue}月|"></h2>
+
+<p th:if="${#lists.isEmpty(summary.companies)}">この月の配達はありません</p>
+
+<table class="summary" th:unless="${#lists.isEmpty(summary.companies)}">
+    <thead>
+    <tr>
+        <th rowspan="2">日付</th>
+        <th th:each="c : ${summary.companies}"
+            th:colspan="${vehicleSizes.length}"
+            th:text="|${c.name}(${c.type.label})|"></th>
+        <th rowspan="2">社内計</th>
+        <th rowspan="2">社外計</th>
+        <th rowspan="2">合計</th>
+    </tr>
+    <tr>
+        <th:block th:each="c : ${summary.companies}">
+            <th th:each="s : ${vehicleSizes}" th:text="${s.label}"></th>
+        </th:block>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="day : ${summary.days}">
+        <td class="date"
+            th:text="${@dateDisplay.shortDate(day)}"
+            th:classappend="${@dateDisplay.dayClass(day)}"></td>
+        <th:block th:each="c : ${summary.companies}">
+            <td th:each="s : ${vehicleSizes}"
+                th:with="n=${summary.count(day, c, s)}"
+                th:text="${n == 0 ? '' : n}"></td>
+        </th:block>
+        <td class="total" th:with="n=${summary.internalTotal(day)}" th:text="${n == 0 ? '' : n}"></td>
+        <td class="total" th:with="n=${summary.externalTotal(day)}" th:text="${n == 0 ? '' : n}"></td>
+        <td class="total" th:with="n=${summary.dayTotal(day)}" th:text="${n == 0 ? '' : n}"></td>
+    </tr>
+    </tbody>
+
+    <tfoot>
+    <tr>
+        <td class="date">合計</td>
+        <th:block th:each="c : ${summary.companies}">
+            <td th:each="s : ${vehicleSizes}" th:text="${summary.columnTotal(c, s)}"></td>
+        </th:block>
+        <td th:text="${summary.internalMonthTotal()}"></td>
+        <td th:text="${summary.externalMonthTotal()}"></td>
+        <td th:text="${summary.monthTotal()}"></td>
+    </tr>
+    </tfoot>
+</table>
+
+</body>
+</html>
