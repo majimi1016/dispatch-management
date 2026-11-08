@@ -8,6 +8,8 @@
         th, td { border: 1px solid #ccc; padding: 6px 10px; }
         .date-nav { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
         .totals { display: flex; gap: 16px; padding: 8px 12px; background: #f3f4f6; margin: 8px 0; }
+        .actions { white-space: nowrap; }
+        .actions form { display: inline; }
     </style>
 </head>
 <body>
@@ -50,6 +52,7 @@
         <th>車格</th>
         <th>台数</th>
         <th>備考</th>
+        <th>操作</th>
     </tr>
     </thead>
     <tbody>
@@ -63,9 +66,16 @@
         <td th:text="${d.vehicleSize?.label}"></td>
         <td th:text="${d.quantity}"></td>
         <td th:text="${d.remarks}"></td>
+        <td class="actions">
+            <a th:href="@{/dispatches/{id}/edit(id=${d.id})}">編集</a>
+            <form th:action="@{/dispatches/{id}/delete(id=${d.id})}" method="post"
+                  onsubmit="return confirm('この配達を削除しますか?')">
+                <button type="submit">削除</button>
+            </form>
+        </td>
     </tr>
     <tr th:if="${#lists.isEmpty(dispatches)}">
-        <td colspan="8">この日の配達はありません</td>
+        <td colspan="9">この日の配達はありません</td>
     </tr>
     </tbody>
 </table>

@@ -2,14 +2,17 @@ package com.example.dispatch;
 
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -115,7 +118,7 @@ public class DispatchController {
         return "dispatches/monthly";
     }
 
-    // ↓ 追加:配達の年別まとめ
+    // 配達の年別まとめ
     @GetMapping("/yearly")
     public String yearly(@RequestParam(name = "year", required = false) Integer year,
                          @RequestParam(name = "view", required = false) String view,
@@ -125,7 +128,6 @@ public class DispatchController {
         List<DispatchRepository.MonthlyCount> rows = repository.sumMonthly(
                 LocalDate.of(targetYear, 1, 1), LocalDate.of(targetYear, 12, 31));
 
-        // 表示の切り替え(会社別・車格別・品目別)に合わせて、列を作る
         List<SummaryColumn> columns = new ArrayList<>();
         if ("size".equals(view)) {
             for (VehicleSize s : VehicleSize.values()) {
@@ -236,5 +238,56 @@ public class DispatchController {
                 dispatches.size() + "件の配達を登録しました");
         redirectAttributes.addAttribute("date", dispatchForm.getDispatchDate().toString());
         return "redirect:/dispatches";
+    }
+
+    // ↓ 追加:編集画面
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable("id") Long id, Model model) {
+        Dispatch dispatch = findDispatch(id);
+        model.addAttribute("dispatchId", id);
+        model.addAttribute("dispatchEditForm", DispatchEditForm.from(dispatch));
+        return "dispatches/edit";
+    }
+
+    // ↓ 追加:更新処理
+    @PostMapping("/{id}/edit")
+    public String update(@PathVariable("id") Long id,
+                         @Valid @ModelAttribute DispatchEditForm dispatchEditForm,
+                         BindingResult result,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
+        Dispatch dispatch = findDispatch(id);
+
+        if (result.hasErrors()) {
+            model.addAttribute("dispatchId", id);
+            return "dispatches/edit";
+        }
+
+        dispatchEditForm.applyTo(dispatch);
+        repository.save(dispatch);
+
+        redirectAttributes.addFlashAttribute("message", "配達を更新しました");
+        redirectAttributes.addAttribute("date", dispatch.getDispatchDate().toString());
+        return "redirect:/dispatches";
+    }
+
+    // ↓ 追加:削除処理
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable("id") Long id,
+                         RedirectAttributes redirectAttributes) {
+        Dispatch dispatch = findDispatch(id);
+        LocalDate date = dispatch.getDispatchDate();
+
+        repository.delete(dispatch);
+
+        redirectAttributes.addFlashAttribute("message", "配達を削除しました");
+        redirectAttributes.addAttribute("date", date.toString());
+        return "redirect:/dispatches";
+    }
+
+    // ↓ 追加:IDで配達を探す(見つからなければ404のエラー画面)
+    private Dispatch findDispatch(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 }

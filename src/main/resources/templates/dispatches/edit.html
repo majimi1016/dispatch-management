@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>配達の編集</title>
+    <style>
+        .error { color: red; }
+        form div { margin: 6px 0; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/menu :: menu}"></nav>
+
+<h1>配達の編集</h1>
+
+<form th:action="@{/dispatches/{id}/edit(id=${dispatchId})}" th:object="${dispatchEditForm}" method="post">
+
+    <div>
+        <label>配車日</label>
+        <input type="date" th:field="*{dispatchDate}">
+        <span class="error" th:if="${#fields.hasErrors('dispatchDate')}" th:errors="*{dispatchDate}"></span>
+    </div>
+
+    <div>
+        <label>昼/夜</label>
+        <label th:each="sh : ${shifts}">
+            <input type="radio" th:field="*{shift}" th:value="${sh}">
+            <span th:text="${sh.label}"></span>
+        </label>
+        <span class="error" th:if="${#fields.hasErrors('shift')}" th:errors="*{shift}"></span>
+    </div>
+
+    <div>
+        <label>会社</label>
+        <select th:field="*{company}">
+            <option value="">選んでください</option>
+            <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"></option>
+        </select>
+        <span class="error" th:if="${#fields.hasErrors('company')}" th:errors="*{company}"></span>
+    </div>
+
+    <div>
+        <label>品目</label>
+        <select th:field="*{item}">
+            <option value="">選んでください</option>
+            <option th:each="i : ${items}" th:value="${i.id}" th:text="${i.name}"></option>
+        </select>
+        <span class="error" th:if="${#fields.hasErrors('item')}" th:errors="*{item}"></span>
+    </div>
+
+    <div>
+        <label>配送先</label>
+        <input type="text" th:field="*{destination}">
+        <span class="error" th:if="${#fields.hasErrors('destination')}" th:errors="*{destination}"></span>
+    </div>
+
+    <div>
+        <label>車格</label>
+        <select th:field="*{vehicleSize}">
+            <option value="">選んでください</option>
+            <option th:each="s : ${vehicleSizes}" th:value="${s}" th:text="${s.label}"></option>
+        </select>
+        <span class="error" th:if="${#fields.hasErrors('vehicleSize')}" th:errors="*{vehicleSize}"></span>
+    </div>
+
+    <div>
+        <label>台数</label>
+        <input type="number" min="1" style="width:70px" th:field="*{quantity}"> 台
+        <span class="error" th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}"></span>
+    </div>
+
+    <div>
+        <label>備考</label>
+        <input type="text" th:field="*{remarks}">
+    </div>
+
+    <button type="submit">更新する</button>
+    <a th:href="@{/dispatches(date=${dispatchEditForm.dispatchDate})}">やめて一覧に戻る</a>
+</form>
+
+</body>
+</html>
