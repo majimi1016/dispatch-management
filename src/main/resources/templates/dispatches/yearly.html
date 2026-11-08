@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>配達の年別まとめ</title>
+    <style>
+        .nav-row { display: flex; gap: 12px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+        .tabs a {
+            padding: 4px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #1f2937;
+        }
+        .tabs a.active { background: #1f2937; color: #fff; }
+        table.summary { border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+        table.summary th, table.summary td {
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        table.summary th { background: #f3f4f6; text-align: center; }
+        table.summary td.month { text-align: left; }
+        table.summary td.total { background: #f9fafb; font-weight: bold; }
+        table.summary tfoot td { background: #eef2ff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/menu :: menu}"></nav>
+
+<h1>配達の年別まとめ</h1>
+
+<!-- 年の切り替え -->
+<div class="nav-row">
+    <a th:href="@{/dispatches/yearly(year=${year - 1}, view=${view})}">◀ 前の年</a>
+    <strong th:text="|${year}年|"></strong>
+    <a th:href="@{/dispatches/yearly(year=${year + 1}, view=${view})}">次の年 ▶</a>
+    <a th:href="@{/dispatches/yearly(view=${view})}">今年</a>
+</div>
+
+<!-- 会社別・車格別・品目別の切り替え -->
+<div class="nav-row tabs">
+    <a th:href="@{/dispatches/yearly(year=${year}, view='company')}"
+       th:classappend="${view == 'company'} ? 'active'">会社別</a>
+    <a th:href="@{/dispatches/yearly(year=${year}, view='size')}"
+       th:classappend="${view == 'size'} ? 'active'">車格別</a>
+    <a th:href="@{/dispatches/yearly(year=${year}, view='item')}"
+       th:classappend="${view == 'item'} ? 'active'">品目別</a>
+</div>
+
+<p th:if="${#lists.isEmpty(summary.columns)}">この年の配達はありません</p>
+
+<table class="summary" th:unless="${#lists.isEmpty(summary.columns)}">
+    <thead>
+    <tr>
+        <th>月</th>
+        <th th:each="col : ${summary.columns}" th:text="${col.label}"></th>
+        <th:block th:if="${summary.companyView}">
+            <th>社内計</th>
+            <th>社外計</th>
+        </th:block>
+        <th>合計</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="m : ${summary.months}">
+        <!-- 月の名前を押すと、その月の月別まとめへ -->
+        <td class="month">
+            <a th:href="@{/dispatches/monthly(ym=${year + '-' + #numbers.formatInteger(m, 2)})}"
+               th:text="|${m}月|"></a>
+        </td>
+        <td th:each="col : ${summary.columns}"
+            th:with="n=${summary.count(m, col)}"
+            th:text="${n == 0 ? '' : n}"></td>
+        <th:block th:if="${summary.companyView}">
+            <td class="total" th:with="n=${summary.internalTotal(m)}" th:text="${n == 0 ? '' : n}"></td>
+            <td class="total" th:with="n=${summary.externalTotal(m)}" th:text="${n == 0 ? '' : n}"></td>
+        </th:block>
+        <td class="total" th:with="n=${summary.monthTotal(m)}" th:text="${n == 0 ? '' : n}"></td>
+    </tr>
+    </tbody>
+
+    <tfoot>
+    <tr>
+        <td class="month">合計</td>
+        <td th:each="col : ${summary.columns}" th:text="${summary.columnTotal(col)}"></td>
+        <th:block th:if="${summary.companyView}">
+            <td th:text="${summary.internalYearTotal()}"></td>
+            <td th:text="${summary.externalYearTotal()}"></td>
+        </th:block>
+        <td th:text="${summary.yearTotal()}"></td>
+    </tr>
+    </tfoot>
+</table>
+
+</body>
+</html>

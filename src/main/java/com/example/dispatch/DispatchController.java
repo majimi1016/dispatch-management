@@ -73,7 +73,6 @@ public class DispatchController {
         List<Dispatch> dispatches =
                 repository.findByDispatchDateOrderByShiftAscCompanyNameAscIdAsc(date);
 
-        // 車格ごとの合計台数を数える
         Map<VehicleSize, Integer> sizeTotals = new EnumMap<>(VehicleSize.class);
         int grandTotal = 0;
         for (Dispatch d : dispatches) {
@@ -90,7 +89,7 @@ public class DispatchController {
         return "dispatches/list";
     }
 
-    // ↓ 追加:配達の月別まとめ
+    // 配達の月別まとめ
     @GetMapping("/monthly")
     public String monthly(@RequestParam(name = "ym", required = false) String ym,
                           @RequestParam(name = "shift", required = false) Shift shift,
@@ -100,14 +99,12 @@ public class DispatchController {
         List<DispatchRepository.DailyCount> rows =
                 repository.sumDaily(target.atDay(1), target.atEndOfMonth(), shift);
 
-        // この月に配達がある会社だけを集める
         Set<Long> companyIds = new HashSet<>();
         for (DispatchRepository.DailyCount r : rows) {
             if (r.getCompanyId() != null) {
                 companyIds.add(r.getCompanyId());
             }
         }
-        // 社内 → 社外、名前の順に並べる
         List<Company> companies = new ArrayList<>(companyRepository.findAllById(companyIds));
         companies.sort(Comparator.comparing(Company::getType)
                 .thenComparing(Company::getName));
@@ -116,6 +113,63 @@ public class DispatchController {
         model.addAttribute("shift", shift);
         model.addAttribute("summary", new MonthlySummary(target, companies, rows));
         return "dispatches/monthly";
+    }
+
+    // ↓ 追加:配達の年別まとめ
+    @GetMapping("/yearly")
+    public String yearly(@RequestParam(name = "year", required = false) Integer year,
+                         @RequestParam(name = "view", required = false) String view,
+                         Model model) {
+        int targetYear = (year == null) ? LocalDate.now().getYear() : year;
+
+        List<DispatchRepository.MonthlyCount> rows = repository.sumMonthly(
+                LocalDate.of(targetYear, 1, 1), LocalDate.of(targetYear, 12, 31));
+
+        // 表示の切り替え(会社別・車格別・品目別)に合わせて、列を作る
+        List<SummaryColumn> columns = new ArrayList<>();
+        if ("size".equals(view)) {
+            for (VehicleSize s : VehicleSize.values()) {
+                columns.add(new SummaryColumn(s.name(), s.getLabel(), null));
+            }
+        } else if ("item".equals(view)) {
+            Set<Long> itemIds = new HashSet<>();
+            boolean hasNoItem = false;
+            for (DispatchRepository.MonthlyCount r : rows) {
+                if (r.getItemId() == null) {
+                    hasNoItem = true;
+                } else {
+                    itemIds.add(r.getItemId());
+                }
+            }
+            List<Item> items = new ArrayList<>(itemRepository.findAllById(itemIds));
+            items.sort(Comparator.comparing(Item::getName));
+            for (Item i : items) {
+                columns.add(new SummaryColumn("i" + i.getId(), i.getName(), null));
+            }
+            if (hasNoItem) {
+                columns.add(new SummaryColumn("i-", "(品目なし)", null));
+            }
+        } else {
+            view = "company";
+            Set<Long> companyIds = new HashSet<>();
+            for (DispatchRepository.MonthlyCount r : rows) {
+                if (r.getCompanyId() != null) {
+                    companyIds.add(r.getCompanyId());
+                }
+            }
+            List<Company> companies = new ArrayList<>(companyRepository.findAllById(companyIds));
+            companies.sort(Comparator.comparing(Company::getType)
+                    .thenComparing(Company::getName));
+            for (Company c : companies) {
+                columns.add(new SummaryColumn("c" + c.getId(),
+                        c.getName() + "(" + c.getType().getLabel() + ")", c.getType()));
+            }
+        }
+
+        model.addAttribute("year", targetYear);
+        model.addAttribute("view", view);
+        model.addAttribute("summary", new YearlySummary(targetYear, view, columns, rows));
+        return "dispatches/yearly";
     }
 
     // 「2026-11」の形の文字を年月にする(空や変な形なら今月)
@@ -146,7 +200,6 @@ public class DispatchController {
                          BindingResult result,
                          RedirectAttributes redirectAttributes) {
 
-        // 同じ車格が2行以上ないかチェック
         Set<VehicleSize> seen = EnumSet.noneOf(VehicleSize.class);
         List<DispatchLine> lines = dispatchForm.getLines();
         for (int i = 0; i < lines.size(); i++) {
@@ -164,7 +217,6 @@ public class DispatchController {
             return "dispatches/form";
         }
 
-        // 車格の行ごとに、配達を1件ずつ作る
         List<Dispatch> dispatches = new ArrayList<>();
         for (DispatchLine line : lines) {
             Dispatch d = new Dispatch();
