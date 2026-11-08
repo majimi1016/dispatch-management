@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>エラー</title>
+    <style>
+        .error-box {
+            max-width: 640px;
+            margin: 40px auto;
+            padding: 24px 32px;
+            border: 1px solid #f5c2c7;
+            background: #fff5f5;
+            border-radius: 8px;
+        }
+        .error-box h1 { margin-top: 0; color: #b91c1c; }
+        .error-title { font-size: 1.1em; font-weight: bold; }
+        .back-button {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 8px 16px;
+            background: #1f2937;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/menu :: menu}"></nav>
+
+<div class="error-box">
+    <h1>エラーが発生しました</h1>
+
+    <th:block th:switch="${status}">
+
+        <div th:case="404">
+            <p class="error-title">ページが見つかりませんでした。(404)</p>
+            <p>URLが間違っているか、ページが削除された可能性があります。</p>
+        </div>
+
+        <div th:case="400">
+            <p class="error-title">入力の内容を読み取れませんでした。(400)</p>
+            <p>日付や数字の形が正しくない可能性があります。もう一度、画面から操作してください。</p>
+        </div>
+
+        <div th:case="405">
+            <p class="error-title">この操作はできません。(405)</p>
+            <p>ボタンからではなく、URLを直接開いた可能性があります。画面のメニューから操作してください。</p>
+        </div>
+
+        <div th:case="500">
+            <p class="error-title">アプリの中でエラーが発生しました。(500)</p>
+            <p>しばらくしてから、もう一度お試しください。何度も続く場合は、管理者に連絡してください。</p>
+        </div>
+
+        <div th:case="*">
+            <p class="error-title" th:text="|予期しないエラーが発生しました。(${status})|"></p>
+            <p>もう一度、画面から操作してください。</p>
+        </div>
+
+    </th:block>
+
+    <a th:href="@{/dispatches}" class="back-button">配達一覧に戻る</a>
+</div>
+
+</body>
+</html>
