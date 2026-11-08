@@ -15,8 +15,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/dispatches")
@@ -55,7 +57,7 @@ public class DispatchController {
         return Shift.values();
     }
 
-    // 配達一覧(日付の指定がなければ今日)  ← 変更
+    // 配達一覧(日付の指定がなければ今日)
     @GetMapping
     public String list(@RequestParam(name = "date", required = false)
                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -99,13 +101,28 @@ public class DispatchController {
     public String create(@Valid @ModelAttribute DispatchForm dispatchForm,
                          BindingResult result,
                          RedirectAttributes redirectAttributes) {
+
+        // ↓ 追加:同じ車格が2行以上ないかチェック
+        Set<VehicleSize> seen = EnumSet.noneOf(VehicleSize.class);
+        List<DispatchLine> lines = dispatchForm.getLines();
+        for (int i = 0; i < lines.size(); i++) {
+            DispatchLine line = lines.get(i);
+            if (line == null || line.getVehicleSize() == null) {
+                continue;  // 車格が未選択の行は、別のチェックでエラーになるので飛ばす
+            }
+            if (!seen.add(line.getVehicleSize())) {
+                result.rejectValue("lines[" + i + "].vehicleSize", "duplicate",
+                        "「" + line.getVehicleSize().getLabel() + "」が2行あります。1行にまとめてください");
+            }
+        }
+
         if (result.hasErrors()) {
             return "dispatches/form";
         }
 
         // 車格の行ごとに、配達を1件ずつ作る
         List<Dispatch> dispatches = new ArrayList<>();
-        for (DispatchLine line : dispatchForm.getLines()) {
+        for (DispatchLine line : lines) {
             Dispatch d = new Dispatch();
             d.setDispatchDate(dispatchForm.getDispatchDate());
             d.setShift(dispatchForm.getShift());
@@ -121,7 +138,6 @@ public class DispatchController {
         repository.saveAll(dispatches);
         redirectAttributes.addFlashAttribute("message",
                 dispatches.size() + "件の配達を登録しました");
-        // ← 追加:登録した日付の一覧に戻る
         redirectAttributes.addAttribute("date", dispatchForm.getDispatchDate().toString());
         return "redirect:/dispatches";
     }
