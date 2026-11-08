@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>配達一覧</title>
+    <style>
+        table { border-collapse: collapse; margin-top: 8px; }
+        th, td { border: 1px solid #ccc; padding: 6px 10px; }
+        .date-nav { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+        .totals { display: flex; gap: 16px; padding: 8px 12px; background: #f3f4f6; margin: 8px 0; }
+    </style>
 </head>
 <body>
 
@@ -12,9 +18,25 @@
 
 <p th:if="${message}" th:text="${message}" style="color:green"></p>
 
+<!-- 日付の切り替え -->
+<form th:action="@{/dispatches}" method="get" class="date-nav">
+    <a th:href="@{/dispatches(date=${date.minusDays(1)})}">◀ 前の日</a>
+    <input type="date" name="date" th:value="${date}">
+    <button type="submit">表示</button>
+    <a th:href="@{/dispatches(date=${date.plusDays(1)})}">次の日 ▶</a>
+    <a th:href="@{/dispatches}">今日</a>
+</form>
+
 <a th:href="@{/dispatches/new}">新しく入力する</a>
 
-<table border="1">
+<!-- その日の合計 -->
+<div class="totals">
+    <strong th:text="${#temporals.format(date, 'M/d') + ' の合計'}"></strong>
+    <span th:each="e : ${sizeTotals}" th:text="${e.key.label + ' ' + e.value + '台'}"></span>
+    <strong th:text="${'合計 ' + grandTotal + '台'}"></strong>
+</div>
+
+<table>
     <thead>
     <tr>
         <th>配車日</th>
@@ -39,7 +61,7 @@
         <td th:text="${d.remarks}"></td>
     </tr>
     <tr th:if="${#lists.isEmpty(dispatches)}">
-        <td colspan="8">配達データがありません</td>
+        <td colspan="8">この日の配達はありません</td>
     </tr>
     </tbody>
 </table>

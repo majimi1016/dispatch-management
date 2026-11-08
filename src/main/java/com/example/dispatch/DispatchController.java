@@ -1,6 +1,7 @@
 package com.example.dispatch;
 
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -8,10 +9,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/dispatches")
@@ -50,10 +55,32 @@ public class DispatchController {
         return Shift.values();
     }
 
-    // 配達一覧
+    // 配達一覧(日付の指定がなければ今日)  ← 変更
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("dispatches", repository.findAllByOrderByDispatchDateAsc());
+    public String list(@RequestParam(name = "date", required = false)
+                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                       Model model) {
+        if (date == null) {
+            date = LocalDate.now();
+        }
+
+        List<Dispatch> dispatches =
+                repository.findByDispatchDateOrderByShiftAscCompanyNameAscIdAsc(date);
+
+        // 車格ごとの合計台数を数える
+        Map<VehicleSize, Integer> sizeTotals = new EnumMap<>(VehicleSize.class);
+        int grandTotal = 0;
+        for (Dispatch d : dispatches) {
+            if (d.getVehicleSize() != null && d.getQuantity() != null) {
+                sizeTotals.merge(d.getVehicleSize(), d.getQuantity(), Integer::sum);
+                grandTotal += d.getQuantity();
+            }
+        }
+
+        model.addAttribute("date", date);
+        model.addAttribute("dispatches", dispatches);
+        model.addAttribute("sizeTotals", sizeTotals);
+        model.addAttribute("grandTotal", grandTotal);
         return "dispatches/list";
     }
 
@@ -61,7 +88,7 @@ public class DispatchController {
     @GetMapping("/new")
     public String newForm(Model model) {
         DispatchForm form = new DispatchForm();
-        form.setShift(Shift.DAY);              // 最初は「昼」
+        form.setShift(Shift.DAY);                // 最初は「昼」
         form.getLines().add(new DispatchLine()); // 車格の行を1行用意しておく
         model.addAttribute("dispatchForm", form);
         return "dispatches/form";
@@ -94,6 +121,8 @@ public class DispatchController {
         repository.saveAll(dispatches);
         redirectAttributes.addFlashAttribute("message",
                 dispatches.size() + "件の配達を登録しました");
+        // ← 追加:登録した日付の一覧に戻る
+        redirectAttributes.addAttribute("date", dispatchForm.getDispatchDate().toString());
         return "redirect:/dispatches";
     }
 }
