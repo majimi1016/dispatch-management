@@ -14,7 +14,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/reservations")
@@ -59,13 +65,101 @@ public class ReservationController {
         return "reservations/list";
     }
 
+    // ↓ 追加:合材予約の月別まとめ(引取済みだけ)
+    @GetMapping("/monthly")
+    public String monthly(@RequestParam(name = "ym", required = false) String ym,
+                          Model model) {
+        YearMonth target = parseYearMonth(ym);
+
+        List<ReservationItemRepository.DailyItemTotal> rows =
+                reservationItemRepository.sumDailyByItem(
+                        target.atDay(1), target.atEndOfMonth(), ReservationStatus.PICKED_UP);
+
+        // 行:1日〜末日
+        List<LocalDate> days = new ArrayList<>();
+        for (int d = 1; d <= target.lengthOfMonth(); d++) {
+            days.add(target.atDay(d));
+        }
+
+        // 列:この月に引取のあった品目
+        Set<Long> itemIds = new HashSet<>();
+        for (ReservationItemRepository.DailyItemTotal r : rows) {
+            if (r.getItemId() != null) {
+                itemIds.add(r.getItemId());
+            }
+        }
+
+        ItemTonSummary summary = new ItemTonSummary(days, findItemsSorted(itemIds));
+        for (ReservationItemRepository.DailyItemTotal r : rows) {
+            summary.add(r.getPickupDate(), r.getItemId(), r.getTotal());
+        }
+
+        model.addAttribute("ym", target);
+        model.addAttribute("summary", summary);
+        return "reservations/monthly";
+    }
+
+    // ↓ 追加:合材予約の年別まとめ(引取済みだけ)
+    @GetMapping("/yearly")
+    public String yearly(@RequestParam(name = "year", required = false) Integer year,
+                         Model model) {
+        int targetYear = (year == null) ? LocalDate.now().getYear() : year;
+
+        List<ReservationItemRepository.MonthlyItemTotal> rows =
+                reservationItemRepository.sumMonthlyByItem(
+                        LocalDate.of(targetYear, 1, 1), LocalDate.of(targetYear, 12, 31),
+                        ReservationStatus.PICKED_UP);
+
+        // 行:1月〜12月
+        List<Integer> months = new ArrayList<>();
+        for (int m = 1; m <= 12; m++) {
+            months.add(m);
+        }
+
+        // 列:この年に引取のあった品目
+        Set<Long> itemIds = new HashSet<>();
+        for (ReservationItemRepository.MonthlyItemTotal r : rows) {
+            if (r.getItemId() != null) {
+                itemIds.add(r.getItemId());
+            }
+        }
+
+        ItemTonSummary summary = new ItemTonSummary(months, findItemsSorted(itemIds));
+        for (ReservationItemRepository.MonthlyItemTotal r : rows) {
+            summary.add(r.getMonthNo(), r.getItemId(), r.getTotal());
+        }
+
+        model.addAttribute("year", targetYear);
+        model.addAttribute("summary", summary);
+        return "reservations/yearly";
+    }
+
+    // 品目を、名前の順に並べて取得する
+    private List<Item> findItemsSorted(Set<Long> itemIds) {
+        List<Item> list = new ArrayList<>(itemRepository.findAllById(itemIds));
+        list.sort(Comparator.comparing(Item::getName));
+        return list;
+    }
+
+    // 「2026-11」の形の文字を年月にする(空や変な形なら今月)
+    private YearMonth parseYearMonth(String ym) {
+        if (ym == null || ym.isBlank()) {
+            return YearMonth.now();
+        }
+        try {
+            return YearMonth.parse(ym);
+        } catch (DateTimeParseException e) {
+            return YearMonth.now();
+        }
+    }
+
     // 予約入力画面
     @GetMapping("/new")
     public String newForm(Model model) {
         ReservationForm form = new ReservationForm();
-        form.setPickupDate(LocalDate.now());         // 最初は今日
-        form.setShift(Shift.DAY);                    // 最初は昼
-        form.getLines().add(new ReservationLine());  // 品目の行を1行用意
+        form.setPickupDate(LocalDate.now());
+        form.setShift(Shift.DAY);
+        form.getLines().add(new ReservationLine());
         model.addAttribute("reservationForm", form);
         return "reservations/form";
     }
@@ -84,7 +178,7 @@ public class ReservationController {
         reservation.setShift(reservationForm.getShift());
         reservation.setCustomerName(reservationForm.getCustomerName());
         reservation.setRemarks(reservationForm.getRemarks());
-        reservation.setStatus(ReservationStatus.RESERVED);  // 最初は「予約中」
+        reservation.setStatus(ReservationStatus.RESERVED);
 
         for (ReservationLine line : reservationForm.getLines()) {
             ReservationItem ri = new ReservationItem();
@@ -93,11 +187,10 @@ public class ReservationController {
             reservation.addItem(ri);
         }
 
-        reservationRepository.save(reservation);  // 品目の行も一緒に保存される
+        reservationRepository.save(reservation);
 
         redirectAttributes.addFlashAttribute("message",
                 "「" + reservation.getCustomerName() + "」の予約を登録しました");
-        // ↓ 直したところ:toString() で「2026-11-07」の形にしてURLに渡す
         redirectAttributes.addAttribute("date", reservation.getPickupDate().toString());
         return "redirect:/reservations";
     }
@@ -123,7 +216,6 @@ public class ReservationController {
 
         redirectAttributes.addFlashAttribute("message",
                 "「" + reservation.getCustomerName() + "」を" + status.getLabel() + "にしました");
-        // ↓ 直したところ
         redirectAttributes.addAttribute("date", reservation.getPickupDate().toString());
         return "redirect:/reservations";
     }

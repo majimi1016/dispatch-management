@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>合材予約の月別まとめ</title>
+    <style>
+        .nav-row { display: flex; gap: 12px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+        table.summary { border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+        table.summary th, table.summary td {
+            border: 1px solid #ccc;
+            padding: 4px 10px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        table.summary th { background: #f3f4f6; text-align: center; }
+        table.summary td.date { text-align: left; }
+        table.summary td.total { background: #f9fafb; font-weight: bold; }
+        table.summary tfoot td { background: #eef2ff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav th:replace="~{fragments/menu :: menu}"></nav>
+
+<h1>合材予約の月別まとめ</h1>
+
+<!-- 月の切り替え -->
+<div class="nav-row">
+    <a th:href="@{/reservations/monthly(ym=${ym.minusMonths(1)})}">◀ 前の月</a>
+    <form th:action="@{/reservations/monthly}" method="get">
+        <input type="month" name="ym" th:value="${ym}">
+        <button type="submit">表示</button>
+    </form>
+    <a th:href="@{/reservations/monthly(ym=${ym.plusMonths(1)})}">次の月 ▶</a>
+    <a th:href="@{/reservations/monthly}">今月</a>
+</div>
+
+<h2 th:text="|${ym.year}年${ym.monthValue}月(引取済みの数量・単位t)|"></h2>
+
+<p th:if="${#lists.isEmpty(summary.items)}">この月に引取済みの予約はありません</p>
+
+<table class="summary" th:unless="${#lists.isEmpty(summary.items)}">
+    <thead>
+    <tr>
+        <th>日付</th>
+        <th th:each="item : ${summary.items}" th:text="${item.name}"></th>
+        <th>合計</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="day : ${summary.rows}">
+        <td class="date"
+            th:text="${@dateDisplay.shortDate(day)}"
+            th:classappend="${@dateDisplay.dayClass(day)}"></td>
+        <td th:each="item : ${summary.items}"
+            th:with="n=${summary.value(day, item)}"
+            th:text="${n.signum() == 0 ? '' : #numbers.formatDecimal(n, 1, 'COMMA', 1, 'POINT')}"></td>
+        <td class="total"
+            th:with="n=${summary.rowTotal(day)}"
+            th:text="${n.signum() == 0 ? '' : #numbers.formatDecimal(n, 1, 'COMMA', 1, 'POINT')}"></td>
+    </tr>
+    </tbody>
+
+    <tfoot>
+    <tr>
+        <td class="date">合計</td>
+        <td th:each="item : ${summary.items}"
+            th:text="${#numbers.formatDecimal(summary.itemTotal(item), 1, 'COMMA', 1, 'POINT')}"></td>
+        <td th:text="${#numbers.formatDecimal(summary.grandTotal(), 1, 'COMMA', 1, 'POINT')}"></td>
+    </tr>
+    </tfoot>
+</table>
+
+</body>
+</html>
