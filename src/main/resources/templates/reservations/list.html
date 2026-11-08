@@ -32,7 +32,10 @@
 <a th:href="@{/reservations/new}">新しく予約する</a>
 
 <!-- 品目ごとの合計 -->
-<h2 th:text="${#temporals.format(date, 'M/d') + ' の品目ごとの合計(キャンセルを除く)'}"></h2>
+<h2>
+    <span th:text="${@dateDisplay.longDate(date)}" th:class="${@dateDisplay.dayClass(date)}"></span>
+    の品目ごとの合計(キャンセルを除く)
+</h2>
 <table>
     <thead>
     <tr>
@@ -52,7 +55,10 @@
 </table>
 
 <!-- 予約の一覧 -->
-<h2 th:text="${#temporals.format(date, 'M/d') + ' の予約'}"></h2>
+<h2>
+    <span th:text="${@dateDisplay.longDate(date)}" th:class="${@dateDisplay.dayClass(date)}"></span>
+    の予約
+</h2>
 <table>
     <thead>
     <tr>

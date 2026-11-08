@@ -31,6 +31,8 @@
         .dropdown-list a { display: block; padding: 8px 12px; }
         .dropdown-list a:hover { background: #f3f4f6; text-decoration: none; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .sat { color: #1d4ed8; }   /* ← 追加:土曜日は青 */
+        .sun { color: #dc2626; }   /* ← 追加:日曜日は赤 */
     </style>
 
     <a th:href="@{/dispatches}">配達一覧</a>
@@ -53,7 +55,7 @@
     </details>
 
     <script>
-        // ↓ 追加:登録ボタンの二重押しを防ぐ(全画面共通)
+        // 登録ボタンの二重押しを防ぐ(全画面共通)
         document.addEventListener('submit', function (e) {
             const form = e.target;
 

@@ -31,7 +31,10 @@
 
 <!-- その日の合計 -->
 <div class="totals">
-    <strong th:text="${#temporals.format(date, 'M/d') + ' の合計'}"></strong>
+    <strong>
+        <span th:text="${@dateDisplay.longDate(date)}" th:class="${@dateDisplay.dayClass(date)}"></span>
+        の合計
+    </strong>
     <span th:each="e : ${sizeTotals}" th:text="${e.key.label + ' ' + e.value + '台'}"></span>
     <strong th:text="${'合計 ' + grandTotal + '台'}"></strong>
 </div>
@@ -51,7 +54,8 @@
     </thead>
     <tbody>
     <tr th:each="d : ${dispatches}">
-        <td th:text="${d.dispatchDate}"></td>
+        <td th:text="${@dateDisplay.shortDate(d.dispatchDate)}"
+            th:class="${@dateDisplay.dayClass(d.dispatchDate)}"></td>
         <td th:text="${d.shift?.label}"></td>
         <td th:text="${d.company?.name}"></td>
         <td th:text="${d.item?.name}"></td>
