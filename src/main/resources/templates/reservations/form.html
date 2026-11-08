@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>予約入力</title>
+    <title th:text="${reservationId == null} ? '予約入力' : '予約の編集'">予約入力</title>
     <style>
         .error { color: red; }
         #lines td { padding: 4px 8px; vertical-align: top; }
@@ -12,9 +12,11 @@
 
 <nav th:replace="~{fragments/menu :: menu}"></nav>
 
-<h1>合材予約の入力</h1>
+<h1 th:text="${reservationId == null} ? '合材予約の入力' : '合材予約の編集'"></h1>
 
-<form th:action="@{/reservations}" th:object="${reservationForm}" method="post">
+<!-- 登録のときは /reservations、編集のときは /reservations/{id}/edit に送る -->
+<form th:action="${reservationId == null} ? @{/reservations} : @{/reservations/{id}/edit(id=${reservationId})}"
+      th:object="${reservationForm}" method="post">
 
     <div>
         <label>引取日</label>
@@ -79,10 +81,11 @@
         <input type="text" th:field="*{remarks}">
     </div>
 
-    <button type="submit" style="margin-top:12px">予約する</button>
+    <button type="submit" style="margin-top:12px"
+            th:text="${reservationId == null} ? '予約する' : '更新する'">予約する</button>
 </form>
 
-<a th:href="@{/reservations}">予約一覧に戻る</a>
+<a th:href="@{/reservations(date=${reservationForm.pickupDate})}">予約一覧に戻る</a>
 
 <script>
     function renumber() {

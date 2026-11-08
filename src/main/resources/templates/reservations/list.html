@@ -10,6 +10,8 @@
         .status-PICKED_UP { background: #e6f4ea; }
         .status-CANCELLED { background: #eeeeee; color: #888; }
         .date-nav { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+        .actions { white-space: nowrap; }
+        .actions form { display: inline; }
     </style>
 </head>
 <body>
@@ -19,6 +21,7 @@
 <h1>合材予約一覧</h1>
 
 <p th:if="${message}" th:text="${message}" style="color:green"></p>
+<p th:if="${errorMessage}" th:text="${errorMessage}" style="color:red"></p>
 
 <!-- 日付の切り替え -->
 <form th:action="@{/reservations}" method="get" class="date-nav">
@@ -80,16 +83,23 @@
         </td>
         <td th:text="${r.remarks}"></td>
         <td th:text="${r.status.label}"></td>
-        <td>
+        <td class="actions">
+            <!-- 予約中のときだけ:編集・引取済み・キャンセル -->
             <th:block th:if="${r.status.name() == 'RESERVED'}">
-                <form th:action="@{/reservations/{id}/pickup(id=${r.id})}" method="post" style="display:inline">
+                <a th:href="@{/reservations/{id}/edit(id=${r.id})}">編集</a>
+                <form th:action="@{/reservations/{id}/pickup(id=${r.id})}" method="post">
                     <button type="submit">引取済みにする</button>
                 </form>
-                <form th:action="@{/reservations/{id}/cancel(id=${r.id})}" method="post" style="display:inline"
+                <form th:action="@{/reservations/{id}/cancel(id=${r.id})}" method="post"
                       onsubmit="return confirm('この予約をキャンセルしますか?')">
                     <button type="submit">キャンセル</button>
                 </form>
             </th:block>
+            <!-- どの状態でも:削除 -->
+            <form th:action="@{/reservations/{id}/delete(id=${r.id})}" method="post"
+                  onsubmit="return confirm('この予約を削除しますか?(元に戻せません)')">
+                <button type="submit">削除</button>
+            </form>
         </td>
     </tr>
     <tr th:if="${#lists.isEmpty(reservations)}">

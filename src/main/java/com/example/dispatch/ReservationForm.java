@@ -28,6 +28,25 @@ public class ReservationForm {
 
     private String remarks;
 
+    // ↓ 追加:保存されている予約から、編集画面の入力内容を作る
+    public static ReservationForm from(Reservation r) {
+        ReservationForm form = new ReservationForm();
+        form.setPickupDate(r.getPickupDate());
+        form.setShift(r.getShift());
+        form.setCustomerName(r.getCustomerName());
+        form.setRemarks(r.getRemarks());
+        for (ReservationItem ri : r.getItems()) {
+            ReservationLine line = new ReservationLine();
+            line.setItem(ri.getItem());
+            line.setQuantity(ri.getQuantity());
+            form.getLines().add(line);
+        }
+        if (form.getLines().isEmpty()) {
+            form.getLines().add(new ReservationLine());
+        }
+        return form;
+    }
+
     public LocalDate getPickupDate() { return pickupDate; }
     public void setPickupDate(LocalDate pickupDate) { this.pickupDate = pickupDate; }
 
